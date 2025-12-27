@@ -1,13 +1,12 @@
-
+import Navbar from './components/navbar'
 import './App.css'
-
+import Manager from './components/manager'
 function App() {
 
   return (
     <>
-     <div className="text-2xl bg-amber-300">
-       hello world
-     </div>
+     <Navbar/>
+     <Manager/>
     </>
   )
 }
