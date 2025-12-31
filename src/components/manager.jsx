@@ -11,12 +11,18 @@ function Manager() {
   const [form, setform] = useState({ site: "", username: "", password: "" });
   const [PasswordArray, setPasswordArray] = useState([]);
 
-  useEffect(() => {
-    let passwords = localStorage.getItem("password");
-
-    if (passwords) {
-      setPasswordArray(JSON.parse(passwords))
+  const getpasswords = async () => {
+    try {
+      let req = await fetch("http://localhost:3000/");
+      let passwords = await req.json();
+      setPasswordArray(passwords);
+      console.log(passwords);
+    } catch (error) {
+      console.error("Failed to fetch passwords:", error);
     }
+  }
+  useEffect(() => {
+   getpasswords();
   }, [])
 
 
@@ -24,26 +30,34 @@ function Manager() {
     setShowPassword((prev) => !prev);
   }
 
-  const savepasswords = () => {
+  const savepasswords =  async () => {
     if(form.site.length>3 && form.username.length>3 && form.password.length>3){
-     toast(' Password saved!',
-      {
-        icon: '✅',
-        style: {
-          borderRadius: '10px',
-          background: '#333',
-          color: '#fff',
-        },
+      const newPassword = { ...form, id: uuidv4() };
+      toast(' Password saved!',
+        {
+          icon: '✅',
+          style: {
+            borderRadius: '10px',
+            background: '#333',
+            color: '#fff',
+          },
+        }
+      );
+      setPasswordArray([...PasswordArray, newPassword]);
+      try {
+        await fetch("http://localhost:3000/", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newPassword)
+        });
+      } catch (error) {
+        console.error("Failed to save password:", error);
       }
-    );
-    console.log(form)
-    setPasswordArray([...PasswordArray, {...form , id:uuidv4()}])
-    localStorage.setItem("password", JSON.stringify([...PasswordArray, {...form , id:uuidv4()}]))
-    console.log([...PasswordArray, {...form , id:uuidv4()}])
-    setform({ site: "", username: "", password: "" })
-    }else{
+      setform({ site: "", username: "", password: "" })
+    } else {
       toast.error("Plz Enter Password ", {
-        
         style: {
           borderRadius: '10px',
           background: '#333',
@@ -51,7 +65,6 @@ function Manager() {
         },
       })
     }
-    
   }
   const handlechange = (e) => {
     setform({ ...form, [e.target.name]: e.target.value })
@@ -70,15 +83,26 @@ function Manager() {
     navigator.clipboard.writeText(text);
 
   }
-  const handledit = (id) => {
+  const handledit = async(id) => {
     
    setform(PasswordArray.filter(i=>i.id===id)[0])
    setPasswordArray(PasswordArray.filter(item=>item.id!=id))
+   try {
+      await fetch("http://localhost:3000/", {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id })
+      });
+    } catch (error) {
+      console.error("Failed to delete password:", error);
+    }
    
   }
 
-  const handledelete = (id) => {
-     toast(' password deleted!',
+  const handledelete = async (id) => {
+    toast(' password deleted!',
       {
         icon: '✅',
         style: {
@@ -88,8 +112,19 @@ function Manager() {
         },
       }
     );
-    setPasswordArray(PasswordArray.filter(item=>item.id!=id))
-     localStorage.setItem("password", JSON.stringify(PasswordArray.filter(item=>item.id!=id)))
+    setPasswordArray(PasswordArray.filter(item => item.id !== id));
+    try {
+      await fetch("http://localhost:3000/", {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id })
+      });
+    } catch (error) {
+      console.error("Failed to delete password:", error);
+    }
+    //  localStorage.setItem("password", JSON.stringify(PasswordArray.filter(item=>item.id!=id)))
   }
 
 
